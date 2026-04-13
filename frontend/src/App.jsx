@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import './App.css';
 
-const socket = io('https://your-render-url-here.onrender.com'); // Keep your Render URL here!
+const socket = io('https://sports-backend-2xim.onrender.com'); // Keep your Render URL here!
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
@@ -26,8 +26,20 @@ function App() {
   return (
     <div className="dashboard-container">
       {/* HEADER */}
+      {/* HEADER */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1 style={{ fontSize: '3rem', margin: '0 0 15px 0', letterSpacing: '-1px' }}>⚡ Live Sports Central</h1>
+        
+        {/* Sleek Connection Pill (This fixes the unused variable error!) */}
+        <div style={{ 
+          display: 'inline-flex', alignItems: 'center', gap: '8px', 
+          background: isConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          padding: '8px 16px', borderRadius: '20px',
+          color: isConnected ? '#34d399' : '#f87171', fontWeight: '600', fontSize: '0.85rem'
+        }}>
+          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: isConnected ? '#34d399' : '#f87171' }}></span>
+          {isConnected ? "System Online" : "Connecting to feeds..."}
+        </div>
       </div>
 
       {/* NEW: TAB NAVIGATION */}
