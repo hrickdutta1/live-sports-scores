@@ -5,83 +5,67 @@ import './App.css';
 const socket = io('https://sports-backend-2xim.onrender.com');
 
 function App() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [footballData, setFootballData] = useState([]);
-  const [activeTab, setActiveTab] = useState('all');
+  const [matches, setMatches] = useState([]);
+  const [isDark, setIsDark] = useState(true);
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    socket.on('connect', () => setIsConnected(true));
-    socket.on('disconnect', () => setIsConnected(false));
-    socket.on('footballUpdate', (data) => setFootballData(data || []));
-    return () => { socket.off('connect'); socket.off('disconnect'); };
+    socket.on('connect', () => setConnected(true));
+    socket.on('footballUpdate', (data) => setMatches(data || []));
+    return () => socket.off();
   }, []);
 
   return (
-    <div className="app-container">
-      {/* Sidebar: Top Leagues */}
+    <div className={`app-shell ${isDark ? 'dark-theme' : 'light-theme'}`}>
+      {/* COLUMN 1: SIDEBAR */}
       <aside className="sidebar">
-        <div className="sidebar-header">
-          <h3>Top leagues</h3>
-        </div>
+        <div className="logo">⚽ SCORE<span>HUB</span></div>
         <ul className="league-list">
-          <li>🏆 FIFA World Cup</li>
-          <li>🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</li>
-          <li>🇪🇺 Champions League</li>
-          <li>🇪🇸 LaLiga</li>
-          <li>🇮🇳 Indian Super League</li>
+          <li>🏆 Premier League</li>
+          <li>🇪🇸 La Liga</li>
+          <li>🇮🇳 ISL</li>
         </ul>
       </aside>
 
-      {/* Main Content: Scores */}
-      <main className="main-content">
+      {/* COLUMN 2: FEED */}
+      <main className="feed-container">
         <header className="feed-header">
-          <div className="status-badge">
-            <span className={isConnected ? "online" : "offline"}>
-              {isConnected ? "● System Live" : "○ Reconnecting..."}
-            </span>
-          </div>
-          <div className="filter-tabs">
-            <button className={activeTab === 'all' ? 'active' : ''} onClick={() => setActiveTab('all')}>Ongoing</button>
-            <button className={activeTab === 'football' ? 'active' : ''} onClick={() => setActiveTab('football')}>Football</button>
-          </div>
+          <h2>Live Football</h2>
+          <span className={`status ${connected ? 'online' : 'offline'}`}>
+            {connected ? "● Connected" : "○ Offline"}
+          </span>
         </header>
 
-        <div className="match-list">
-          {footballData.length > 0 ? (
-            footballData.map((match) => (
-              <div key={match.id} className="match-row">
-                <span className="match-time">{match.minute}'</span>
-                <div className="match-main">
-                  <div className="team-side home">
-                    <span className="team-name">{match.homeTeam}</span>
-                    <img src={match.homeLogo} alt="" className="mini-logo" />
-                  </div>
-                  <div className="score-area">
-                    <span className="score-box">{match.homeScore} - {match.awayScore}</span>
-                  </div>
-                  <div className="team-side away">
-                    <img src={match.awayLogo} alt="" className="mini-logo" />
-                    <span className="team-name">{match.awayTeam}</span>
-                  </div>
+        <div className="match-grid">
+          {matches.length > 0 ? matches.map(m => (
+            <div key={m.id} className="match-card">
+              <div className="match-top">
+                <span>{m.league}</span>
+                <span className="live-tag">{m.minute}'</span>
+              </div>
+              <div className="score-row">
+                <div className="team">
+                   <img src={m.home.logo} alt="" />
+                   <span>{m.home.name}</span>
+                </div>
+                <div className="score">{m.home.score} - {m.away.score}</div>
+                <div className="team">
+                   <span>{m.away.name}</span>
+                   <img src={m.away.logo} alt="" />
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="no-matches">No live matches at the moment. Checking for updates...</div>
-          )}
+            </div>
+          )) : <p className="loading">Waiting for live match data...</p>}
         </div>
       </main>
 
-      {/* Right Panel: News & Promo */}
-      <aside className="right-panel">
-        <div className="promo-box">
-          <h4>Build your own XI</h4>
-          <p>Try our lineup builder</p>
-          <div className="pitch-icon">⚽</div>
-        </div>
-        <div className="news-box">
-          <div className="news-img-placeholder">News Update</div>
-          <p>Latest transfer rumors and injury news from the top leagues.</p>
+      {/* COLUMN 3: SETTINGS */}
+      <aside className="utils-bar">
+        <div className="settings-panel">
+          <h4>Settings</h4>
+          <button className="theme-btn" onClick={() => setIsDark(!isDark)}>
+            {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
+          </button>
         </div>
       </aside>
     </div>
