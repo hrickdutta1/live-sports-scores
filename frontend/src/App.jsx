@@ -1,118 +1,89 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import './App.css';
 
-// Your official Render link is now active!
 const socket = io('https://sports-backend-2xim.onrender.com');
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [footballData, setFootballData] = useState([]);
-  const [cricketData, setCricketData] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
-  const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('sports_favorites');
-    return saved ? JSON.parse(saved) : [];
-  });
 
   useEffect(() => {
     socket.on('connect', () => setIsConnected(true));
     socket.on('disconnect', () => setIsConnected(false));
     socket.on('footballUpdate', (data) => setFootballData(data || []));
-    socket.on('cricketUpdate', (data) => setCricketData(data || []));
-
-    return () => {
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('footballUpdate');
-      socket.off('cricketUpdate');
-    };
+    return () => { socket.off('connect'); socket.off('disconnect'); };
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('sports_favorites', JSON.stringify(favorites));
-  }, [favorites]);
-
-  const toggleFavorite = (id) => {
-    setFavorites(prev => 
-      prev.includes(id) ? prev.filter(favId => favId !== id) : [...prev, id]
-    );
-  };
-
-  const getSortedMatches = (matches) => {
-    return [...matches].sort((a, b) => {
-      const aFav = favorites.includes(a.id);
-      const bFav = favorites.includes(b.id);
-      return bFav - aFav; 
-    });
-  };
-
   return (
-    <div className="dashboard-container">
-      <header style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '3.5rem', margin: '0 0 10px 0', fontWeight: '800' }}>⚡ Live Sports</h1>
-        <div className={`connection-pill ${isConnected ? 'online' : 'offline'}`}>
-          <span className="dot"></span>
-          {isConnected ? "System Live" : "Connecting to Render..."}
+    <div className="app-container">
+      {/* Sidebar: Top Leagues */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h3>Top leagues</h3>
         </div>
-      </header>
+        <ul className="league-list">
+          <li>🏆 FIFA World Cup</li>
+          <li>🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</li>
+          <li>🇪🇺 Champions League</li>
+          <li>🇪🇸 LaLiga</li>
+          <li>🇮🇳 Indian Super League</li>
+        </ul>
+      </aside>
 
-      <nav className="tab-container">
-        {['all', 'football', 'cricket'].map(tab => (
-          <button 
-            key={tab}
-            className={`nav-tab ${activeTab === tab ? 'active' : ''}`} 
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab === 'all' ? '🌍 All' : tab === 'football' ? `⚽ Football` : `🏏 Cricket`}
-          </button>
-        ))}
-      </nav>
-
-      <div className="match-grid">
-        {(activeTab === 'all' || activeTab === 'football') && getSortedMatches(footballData).map((match) => (
-          <div key={match.id} className={`sport-card football-card ${favorites.includes(match.id) ? 'is-fav' : ''}`}>
-            <div className="card-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <button className={`fav-star ${favorites.includes(match.id) ? 'active' : ''}`} onClick={() => toggleFavorite(match.id)}>
-                  ★
-                </button>
-                <span className="league-label">{match.league || "Global"}</span>
-              </div>
-              <div className="live-timer"><span className="pulse"></span> {match.minute}'</div>
-            </div>
-            <div className="match-content">
-              <div className="team">
-                <img src={match.homeLogo} alt="" />
-                <p>{match.homeTeam}</p>
-              </div>
-              <div className="score-display">
-                <span className="score-number">{match.homeScore}</span>
-                <span className="score-divider">-</span>
-                <span className="score-number">{match.awayScore}</span>
-              </div>
-              <div className="team">
-                <img src={match.awayLogo} alt="" />
-                <p>{match.awayTeam}</p>
-              </div>
-            </div>
+      {/* Main Content: Scores */}
+      <main className="main-content">
+        <header className="feed-header">
+          <div className="status-badge">
+            <span className={isConnected ? "online" : "offline"}>
+              {isConnected ? "● System Live" : "○ Reconnecting..."}
+            </span>
           </div>
-        ))}
-
-        {(activeTab === 'all' || activeTab === 'cricket') && getSortedMatches(cricketData).map((match) => (
-          <div key={match.id} className={`sport-card cricket-card ${favorites.includes(match.id) ? 'is-fav' : ''}`}>
-             <div className="card-header">
-                <button className={`fav-star ${favorites.includes(match.id) ? 'active' : ''}`} onClick={() => toggleFavorite(match.id)}>★</button>
-                <div className="live-badge-cricket">LIVE</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{match.title}</h2>
-              <div className="status-container"><p>{match.status}</p></div>
-              <p className="venue-text">📍 {match.venue}</p>
-            </div>
+          <div className="filter-tabs">
+            <button className={activeTab === 'all' ? 'active' : ''} onClick={() => setActiveTab('all')}>Ongoing</button>
+            <button className={activeTab === 'football' ? 'active' : ''} onClick={() => setActiveTab('football')}>Football</button>
           </div>
-        ))}
-      </div>
+        </header>
+
+        <div className="match-list">
+          {footballData.length > 0 ? (
+            footballData.map((match) => (
+              <div key={match.id} className="match-row">
+                <span className="match-time">{match.minute}'</span>
+                <div className="match-main">
+                  <div className="team-side home">
+                    <span className="team-name">{match.homeTeam}</span>
+                    <img src={match.homeLogo} alt="" className="mini-logo" />
+                  </div>
+                  <div className="score-area">
+                    <span className="score-box">{match.homeScore} - {match.awayScore}</span>
+                  </div>
+                  <div className="team-side away">
+                    <img src={match.awayLogo} alt="" className="mini-logo" />
+                    <span className="team-name">{match.awayTeam}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="no-matches">No live matches at the moment. Checking for updates...</div>
+          )}
+        </div>
+      </main>
+
+      {/* Right Panel: News & Promo */}
+      <aside className="right-panel">
+        <div className="promo-box">
+          <h4>Build your own XI</h4>
+          <p>Try our lineup builder</p>
+          <div className="pitch-icon">⚽</div>
+        </div>
+        <div className="news-box">
+          <div className="news-img-placeholder">News Update</div>
+          <p>Latest transfer rumors and injury news from the top leagues.</p>
+        </div>
+      </aside>
     </div>
   );
 }
