@@ -23,15 +23,15 @@ const fetchScores = async () => {
     const matches = res.data?.response || [];
     cachedFootballData = matches.slice(0, 10).map(m => ({
       id: m.fixture.id,
-      league: m.league.name,
-      homeTeam: m.teams.home.name,
-      homeLogo: m.teams.home.logo,
-      awayTeam: m.teams.away.name,
-      awayLogo: m.teams.away.logo,
-      homeScore: m.goals.home ?? 0,
-      awayScore: m.goals.away ?? 0,
-      minute: m.fixture.status.elapsed || 0,
-      venue: m.fixture.venue.name || "Stadium"
+      league: m.league?.name || "League",
+      homeTeam: m.teams?.home?.name || "Home",
+      homeLogo: m.teams?.home?.logo || "",
+      awayTeam: m.teams?.away?.name || "Away",
+      awayLogo: m.teams?.away?.logo || "",
+      homeScore: m.goals?.home ?? 0,
+      awayScore: m.goals?.away ?? 0,
+      minute: m.fixture?.status?.elapsed || 0,
+      venue: m.fixture?.venue?.name || "Stadium"
     }));
     io.emit('footballUpdate', cachedFootballData);
   } catch (err) {
@@ -39,7 +39,6 @@ const fetchScores = async () => {
   }
 };
 
-// This helps Render confirm the app is healthy
 app.get('/', (req, res) => {
   res.status(200).send('SERVER_LIVE_SUCCESS');
 });
@@ -47,19 +46,8 @@ app.get('/', (req, res) => {
 setInterval(fetchScores, 60000);
 
 const PORT = process.env.PORT || 10000;
-// Using 0.0.0.0 is mandatory for Render port binding
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`==> Server listening on port ${PORT}`);
-  fetchScores();
-});
-app.get('/', (req, res) => {
-  res.send('Backend is Live and Healthy!');
-});
-
-const PORT = process.env.PORT || 10000;
-
-// CRITICAL: We listen on 0.0.0.0 so Render can "see" the port
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`==> SUCCESS: Bound to port ${PORT}`);
   fetchScores();
 });
