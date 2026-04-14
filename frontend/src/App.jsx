@@ -6,137 +6,161 @@ const socket = io('https://sports-backend-2xim.onrender.com');
 
 function App() {
   const [allMatches, setAllMatches] = useState([]);
-  const [selectedLeague, setSelectedLeague] = useState('All');
+  const [selectedCountry, setSelectedCountry] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [h2hData, setH2HData] = useState(null);
   const [isDark, setIsDark] = useState(true);
-  const [connected, setConnected] = useState(false);
 
+  // 1. Move this function HERE (Above the useEffect)
+  const handleMatchSelection = async (match) => {
+    if (!match) return;
+    setSelectedMatch(match);
+    if (match?.home?.id && match?.away?.id) {
+      setH2HData(null); 
+      try {
+        const response = await fetch(`https://sports-backend-2xim.onrender.com/api/h2h/${match.home.id}/${match.away.id}`);
+        const data = await response.json();
+        setH2HData(data);
+      } catch (error) {
+        console.error("H2H Fetch Error:", error);
+        setH2HData({ homeWins: 0, awayWins: 0, draws: 0, total: 0 });
+      }
+    }
+  };
+
+  // 2. Now the useEffect can safely see the function
   useEffect(() => {
-    socket.on('connect', () => setConnected(true));
     socket.on('footballUpdate', (data) => {
       const validData = Array.isArray(data) ? data : [];
       setAllMatches(validData);
-      // Auto-select first match on initial load if nothing is selected
-      if (validData.length > 0 && !selectedMatch) {
-        setSelectedMatch(validData[0]);
+      if (!selectedMatch && validData.length > 0) {
+        handleMatchSelection(validData[0]);
       }
     });
     return () => socket.off();
   }, [selectedMatch]);
 
+  // 3. Filtering logic
   const filteredMatches = useMemo(() => {
-    if (!allMatches) return [];
-    return selectedLeague === 'All' 
-      ? allMatches 
-      : allMatches.filter(m => m?.league === selectedLeague);
-  }, [allMatches, selectedLeague]);
+    return allMatches.filter(m => {
+      const matchGeo = selectedCountry === 'All' || m.country === selectedCountry;
+      const matchSearch = m.home?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          m.away?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchGeo && matchSearch;
+    });
+  }, [allMatches, selectedCountry, searchTerm]);
 
-  const handleLeagueChange = (league) => {
-    setSelectedLeague(league);
-    const newFiltered = league === 'All' 
-      ? allMatches 
-      : allMatches.filter(m => m?.league === league);
-    setSelectedMatch(newFiltered.length > 0 ? newFiltered[0] : null);
-  };
-
-  const uniqueLeagues = ['All', ...new Set(allMatches.map(m => m?.league).filter(Boolean))];
+  const countryList = ['All', ...new Set(allMatches.map(m => m.country).filter(Boolean))];
 
   return (
-    <div className={`app-canvas ${isDark ? 'dark-theme' : 'light-theme'}`}>
-      <aside className="glass-sidebar">
-        <div className="sidebar-top">
-          <div className="brand-logo">⚽ SCORE<span>HUB</span></div>
-          <nav className="nav-menu">
-            <p className="nav-label">Browse Leagues</p>
-            <div className="league-list-container">
-              {uniqueLeagues.map(league => (
-                <button 
-                  key={league}
-                  className={`nav-item ${selectedLeague === league ? 'active' : ''}`}
-                  onClick={() => handleLeagueChange(league)}
-                >
-                  <span className="dot"></span> {league}
-                </button>
-              ))}
-            </div>
-          </nav>
+    <div className={`app-container ${isDark ? 'dark' : 'light'}`}>
+      
+      {/* SIDEBAR */}
+      <aside className="main-sidebar">
+        <div className="logo-section">
+          <h2 className="logo">GOAL<span>GRID</span></h2>
         </div>
-        <div className="sidebar-bottom">
-          <button className="theme-toggle-btn" onClick={() => setIsDark(!isDark)}>
-            {isDark ? "☀️ Light" : "🌙 Dark"}
-          </button>
-        </div>
+        <nav className="side-nav">
+          <p className="section-label">COUNTRIES</p>
+          <div className="country-scroll">
+            {countryList.map(c => (
+              <button 
+                key={c} 
+                className={`country-btn ${selectedCountry === c ? 'active' : ''}`}
+                onClick={() => setSelectedCountry(c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </nav>
       </aside>
 
-      <main className="main-feed">
-        <header className="feed-header">
-          <div>
-            <h1>{selectedLeague} Matches</h1>
-            <p className="subtitle">{filteredMatches.length} Matches Found</p>
+      {/* MAIN CONTENT */}
+      <main className="content-hub">
+        <header className="top-bar">
+          <div className="search-wrapper">
+            <input 
+              type="text" 
+              placeholder="Search team or league..." 
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <div className={`status-pill ${connected ? 'online' : 'offline'}`}>
-            {connected ? "LIVE" : "CONNECTING..."}
-          </div>
+          <button className="theme-toggle" onClick={() => setIsDark(!isDark)}>
+            {isDark ? '☀️' : '🌙'}
+          </button>
         </header>
 
-        <section className="match-grid">
-          {filteredMatches.length > 0 ? filteredMatches.map(m => (
+        <section className="premium-banner">
+          <div className="banner-info">
+            <span className="badge">PRO ACCESS</span>
+            <h1>Football Analytics 2026</h1>
+            <p>Live stats and deep-dive historical H2H data.</p>
+          </div>
+        </section>
+
+        <section className="match-display">
+          {filteredMatches.map(m => (
             <div 
-              key={m?.id} 
-              className={`pro-match-card ${selectedMatch?.id === m?.id ? 'active-card' : ''}`}
-              onClick={() => setSelectedMatch(m)}
+              key={m.id} 
+              className={`match-card ${selectedMatch?.id === m.id ? 'highlight' : ''}`}
+              onClick={() => handleMatchSelection(m)}
             >
-              <div className="card-tag">
-                <span className="l-name">{m?.league}</span>
-                <span className="m-time">{m?.status === 'NS' ? m?.time : `${m?.minute}'`}</span>
+              <div className="card-top">
+                <span className="league-name">{m.league}</span>
+                <span className="time-pill">{m.status === 'NS' ? m.time : `${m.minute}'`}</span>
               </div>
-              <div className="main-score-row">
-                <div className="t-box">
-                  <img src={m?.home?.logo} alt="" />
-                  <span>{m?.home?.name}</span>
+              <div className="card-body">
+                <div className="team">
+                  <img src={m.home?.logo} alt="" />
+                  <p>{m.home?.name}</p>
                 </div>
-                <div className="s-box">{m?.home?.score} - {m?.away?.score}</div>
-                <div className="t-box">
-                  <img src={m?.away?.logo} alt="" />
-                  <span>{m?.away?.name}</span>
+                <div className="center-score">
+                  <span className="score">{m.home?.score} - {m.away?.score}</span>
+                </div>
+                <div className="team">
+                  <img src={m.away?.logo} alt="" />
+                  <p>{m.away?.name}</p>
                 </div>
               </div>
             </div>
-          )) : (
-            <div className="no-data-msg">Scanning stadiums for matches...</div>
-          )}
+          ))}
         </section>
       </main>
 
-      <aside className="insights-panel">
-        <div className="glass-panel">
-          <h4 className="panel-title">Analysis</h4>
+      {/* INSIGHTS PANEL */}
+      <aside className="insights-drawer">
+        <div className="insights-card">
+          <h3>Analysis Center</h3>
           {selectedMatch ? (
-            <div className="analysis-box">
-              <div className="teams-header">
-                <span>{selectedMatch?.home?.name}</span>
-                <span className="vs">VS</span>
-                <span>{selectedMatch?.away?.name}</span>
+            <div className="data-stack">
+              <div className="h2h-summary">
+                <p>Historical H2H</p>
+                {h2hData ? (
+                  <div className="h2h-visual">
+                    <div className="h2h-labels">
+                      <span>Wins: {h2hData.homeWins}</span>
+                      <span>Draws: {h2hData.draws}</span>
+                      <span>Wins: {h2hData.awayWins}</span>
+                    </div>
+                    <div className="h2h-bar-container">
+                      <div className="h2h-seg h-w" style={{width: `${(h2hData.homeWins/h2hData.total)*100 || 33}%`}}></div>
+                      <div className="h2h-seg draw" style={{width: `${(h2hData.draws/h2hData.total)*100 || 34}%`}}></div>
+                      <div className="h2h-seg a-w" style={{width: `${(h2hData.awayWins/h2hData.total)*100 || 33}%`}}></div>
+                    </div>
+                  </div>
+                ) : <div className="shimmer">Analyzing history...</div>}
               </div>
-              <div className="momentum-section">
-                <p>Win Probability</p>
-                <div className="m-bar">
-                  <div className="m-fill home" style={{width: `${selectedMatch?.momentum?.home || 50}%`}}></div>
-                  <div className="m-fill away" style={{width: `${selectedMatch?.momentum?.away || 50}%`}}></div>
-                </div>
-              </div>
-              <div className="stats-grid">
-                <div className="stat-item">
-                  <label>Total Attacks</label>
-                  <span>{(selectedMatch?.home?.attacks || 0) + (selectedMatch?.away?.attacks || 0)}</span>
-                </div>
-                <div className="stat-item">
-                  <label>Corners</label>
-                  <span>{(selectedMatch?.home?.corners || 0) + (selectedMatch?.away?.corners || 0)}</span>
+
+              <div className="momentum-gauge">
+                <p>Match Pressure</p>
+                <div className="gauge-track">
+                  <div className="gauge-fill" style={{width: `${selectedMatch.momentum?.home}%`}}></div>
                 </div>
               </div>
             </div>
-          ) : <p className="select-prompt">Select a match to view data</p>}
+          ) : <p>Select a match to unlock insights</p>}
         </div>
       </aside>
     </div>
