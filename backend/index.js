@@ -7,47 +7,53 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors());
-
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] }
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
-let cachedFootballData = [];
+let footballCache = [];
 
-const fetchScores = async () => {
+const fetchFootball = async () => {
   try {
-    const res = await axios.get('https://v3.football.api-sports.io/fixtures?live=all', {
+    // 1. Try fetching LIVE matches first
+    let response = await axios.get('https://v3.football.api-sports.io/fixtures?live=all', {
       headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY }
     });
-    const matches = res.data?.response || [];
-    cachedFootballData = matches.slice(0, 10).map(m => ({
+
+    let matches = response.data?.response || [];
+
+    // 2. SMART FALLBACK: If no live matches, fetch the next 10 upcoming games
+    if (matches.length === 0) {
+      console.log("No live matches. Fetching upcoming fixtures...");
+      const upcoming = await axios.get('https://v3.football.api-sports.io/fixtures?next=10', {
+        headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY }
+      });
+      matches = upcoming.data?.response || [];
+    }
+    
+    footballCache = matches.map(m => ({
       id: m.fixture.id,
-      league: m.league?.name || "League",
-      homeTeam: m.teams?.home?.name || "Home",
-      homeLogo: m.teams?.home?.logo || "",
-      awayTeam: m.teams?.away?.name || "Away",
-      awayLogo: m.teams?.away?.logo || "",
-      homeScore: m.goals?.home ?? 0,
-      awayScore: m.goals?.away ?? 0,
-      minute: m.fixture?.status?.elapsed || 0,
-      venue: m.fixture?.venue?.name || "Stadium"
+      league: m.league.name,
+      home: { name: m.teams.home.name, logo: m.teams.home.logo, score: m.goals.home ?? 0 },
+      away: { name: m.teams.away.name, logo: m.teams.away.logo, score: m.goals.away ?? 0 },
+      status: m.fixture.status.short, 
+      minute: m.fixture.status.elapsed || 0,
+      timestamp: m.fixture.timestamp
     }));
-    io.emit('footballUpdate', cachedFootballData);
+
+    io.emit('footballUpdate', footballCache);
+    console.log(`Broadcasted ${footballCache.length} matches.`);
   } catch (err) {
-    console.log("API Fetch Error");
+    console.error("API Error:", err.message);
   }
 };
 
-app.get('/', (req, res) => {
-  res.status(200).send('SERVER_LIVE_SUCCESS');
-});
+// Update every 2 minutes to stay safe within free tier limits
+setInterval(fetchFootball, 120000);
 
-setInterval(fetchScores, 60000);
+app.get('/', (req, res) => res.send('Football Backend with Fallback Active'));
 
 const PORT = process.env.PORT || 10000;
-
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`==> Server listening on port ${PORT}`);
-  fetchScores();
+  console.log(`Server running on port ${PORT}`);
+  fetchFootball();
 });
