@@ -1,115 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+:root { --accent: #00ff88; --bg-dark: #050505; --glass: rgba(255,255,255,0.05); }
 
-:root {
-  --sidebar-w: 260px;
-  --panel-w: 300px;
-  --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+.app-canvas { display: flex; min-height: 100vh; background: var(--bg-dark); color: white; padding: 20px; gap: 20px; font-family: 'Inter', sans-serif; }
+
+/* BANNER */
+.hero-banner { 
+  height: 200px; border-radius: 20px; margin-bottom: 20px;
+  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200');
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; padding: 40px;
 }
 
-/* THEME DEFINITIONS */
-.dark-theme {
-  --bg: #0b0e14;
-  --glass-bg: rgba(22, 27, 34, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --text-main: #f0f6fc;
-  --text-dim: #8b949e;
-  --accent: #238636;
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+/* SEARCH */
+.search-container input {
+  width: 100%; background: var(--glass); border: 1px solid rgba(255,255,255,0.1);
+  padding: 12px 20px; border-radius: 12px; color: white; outline: none; margin-bottom: 20px;
 }
 
-.light-theme {
-  --bg: #f6f8fa;
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(0, 0, 0, 0.05);
-  --text-main: #1f2328;
-  --text-dim: #6e7681;
-  --accent: #2da44e;
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
-}
+/* SIDEBAR SCROLL */
+.scroll-area { height: 70vh; overflow-y: auto; padding-right: 5px; }
+.scroll-area::-webkit-scrollbar { width: 4px; }
+.scroll-area::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
 
-/* LAYOUT ENGINE */
-.app-canvas {
-  display: flex;
-  min-height: 100vh;
-  background-color: var(--bg);
-  color: var(--text-main);
-  font-family: 'Inter', sans-serif;
-  padding: 20px;
-  gap: 20px;
-  transition: background 0.5s ease;
-}
+/* FORM PILLS */
+.pills { display: flex; gap: 5px; }
+.pill { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+.pill.W { background: #238636; }
+.pill.L { background: #da3633; }
+.pill.D { background: #8b949e; }
 
-/* 1. FLOATING SIDEBAR */
-.glass-sidebar {
-  width: var(--sidebar-w);
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 30px 20px;
-  position: sticky;
-  top: 20px;
-  height: calc(100vh - 40px);
-}
+/* H2H BAR */
+.h2h-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+.h-win { background: var(--accent); }
+.draw { background: #555; }
+.a-win { background: #ff4444; }
 
-.brand-logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 40px; }
-.brand-logo span { color: var(--accent); }
-
-.nav-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 15px; }
-.nav-item {
-  width: 100%; text-align: left; background: none; border: none; color: var(--text-dim);
-  padding: 12px 15px; border-radius: 12px; cursor: pointer; transition: var(--transition);
-  margin-bottom: 5px; font-weight: 600;
-}
-.nav-item.active { background: var(--accent); color: white; }
-
-.theme-toggle-btn {
-  width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border);
-  background: var(--bg); color: var(--text-main); cursor: pointer; font-size: 0.8rem;
-}
-
-/* 2. MAIN FEED & HERO CARDS */
-.main-feed { flex: 1; display: flex; flex-direction: column; gap: 30px; }
-
-.feed-header h1 { font-size: 2.2rem; font-weight: 800; margin: 0; }
-.feed-header p { color: var(--text-dim); margin-top: 5px; }
-
-.pro-match-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: var(--card-shadow);
-  transition: var(--transition);
-}
-.pro-match-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-
-.scoreboard { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
-.team { display: flex; flex-direction: column; align-items: center; width: 35%; gap: 10px; }
-.team-logo { width: 50px; height: 50px; object-fit: contain; }
-.team-name { font-weight: 700; font-size: 1.1rem; text-align: center; }
-
-.live-score { display: flex; align-items: center; gap: 15px; }
-.score-num { font-size: 2.5rem; font-weight: 800; }
-.score-divider { color: var(--text-dim); font-size: 1.5rem; }
-
-.league-badge { background: var(--bg); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; }
-.match-clock { color: var(--accent); font-weight: 800; font-size: 0.85rem; }
-
-/* 3. INSIGHTS PANEL */
-.insights-panel { width: var(--panel-w); }
-.glass-panel {
-  background: var(--glass-bg); border: 1px solid var(--glass-border);
-  padding: 20px; border-radius: 20px; height: 300px;
-}
-
-.pulse-dot {
-  height: 8px; width: 8px; background-color: var(--accent); border-radius: 50%;
-  display: inline-block; margin-left: 5px; animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+/* OTHER UI ELEMENTS (REUSE PREVIOUS GLASS STYLES) */
+.glass-sidebar, .pro-match-card, .glass-panel { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }

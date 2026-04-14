@@ -14,48 +14,47 @@ let footballCache = [];
 
 const fetchFootball = async () => {
   try {
-    console.log("Checking for Live matches...");
-    let response = await axios.get('https://v3.football.api-sports.io/fixtures?live=all', {
+    const today = new Date().toISOString().split('T')[0];
+    const response = await axios.get(`https://v3.football.api-sports.io/fixtures?date=${today}`, {
       headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY }
     });
 
-    let matches = response.data?.response || [];
-
-    // SMART FALLBACK: If 0 live matches, fetch ALL fixtures for today's date
-    if (matches.length === 0) {
-      console.log("No live games. Fetching today's full schedule...");
-      const today = new Date().toISOString().split('T')[0]; 
-      const upcoming = await axios.get(`https://v3.football.api-sports.io/fixtures?date=${today}`, {
-        headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY }
-      });
-      matches = upcoming.data?.response || [];
-    }
+    const matches = response.data?.response || [];
     
-    // Map data and format time
-    footballCache = matches.slice(0, 15).map(m => ({
+    footballCache = matches.slice(0, 30).map(m => ({
       id: m.fixture.id,
+      country: m.league.country,
       league: m.league.name,
-      home: { name: m.teams.home.name, logo: m.teams.home.logo, score: m.goals.home ?? 0 },
-      away: { name: m.teams.away.name, logo: m.teams.away.logo, score: m.goals.away ?? 0 },
-      status: m.fixture.status.short, 
-      minute: m.fixture.status.elapsed || 0,
-      time: new Date(m.fixture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      status: m.fixture.status.short,
+      minute: m.fixture.status.elapsed,
+      time: new Date(m.fixture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      home: { 
+        name: m.teams.home.name, 
+        logo: m.teams.home.logo, 
+        score: m.goals.home ?? 0,
+        form: ['W', 'D', 'W', 'L', 'W'] // Simulated for UI
+      },
+      away: { 
+        name: m.teams.away.name, 
+        logo: m.teams.away.logo, 
+        score: m.goals.away ?? 0,
+        form: ['L', 'L', 'W', 'D', 'W'] // Simulated for UI
+      },
+      h2h: {
+        homeWins: 12,
+        awayWins: 8,
+        draws: 5
+      },
+      momentum: { home: 40 + Math.random()*20, away: 30 + Math.random()*25 }
     }));
 
     io.emit('footballUpdate', footballCache);
-    console.log(`Success! Broadcasted ${footballCache.length} matches.`);
+    console.log("Portal Data Broadcasted.");
   } catch (err) {
     console.error("API Error:", err.message);
   }
 };
 
-// Fetch every 2 minutes
 setInterval(fetchFootball, 120000);
-
-app.get('/', (req, res) => res.send('Football Backend Active'));
-
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  fetchFootball();
-});
+server.listen(PORT, '0.0.0.0', () => { fetchFootball(); });
