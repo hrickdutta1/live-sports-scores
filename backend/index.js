@@ -14,43 +14,45 @@ let footballCache = [];
 
 const fetchFootball = async () => {
   try {
-    // 1. Try fetching LIVE matches first
+    console.log("Checking for Live matches...");
     let response = await axios.get('https://v3.football.api-sports.io/fixtures?live=all', {
       headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY }
     });
 
     let matches = response.data?.response || [];
 
-    // 2. SMART FALLBACK: If no live matches, fetch the next 10 upcoming games
+    // SMART FALLBACK: If 0 live matches, fetch ALL fixtures for today's date
     if (matches.length === 0) {
-      console.log("No live matches. Fetching upcoming fixtures...");
-      const upcoming = await axios.get('https://v3.football.api-sports.io/fixtures?next=10', {
+      console.log("No live games. Fetching today's full schedule...");
+      const today = new Date().toISOString().split('T')[0]; 
+      const upcoming = await axios.get(`https://v3.football.api-sports.io/fixtures?date=${today}`, {
         headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY }
       });
       matches = upcoming.data?.response || [];
     }
     
-    footballCache = matches.map(m => ({
+    // Map data and format time
+    footballCache = matches.slice(0, 15).map(m => ({
       id: m.fixture.id,
       league: m.league.name,
       home: { name: m.teams.home.name, logo: m.teams.home.logo, score: m.goals.home ?? 0 },
       away: { name: m.teams.away.name, logo: m.teams.away.logo, score: m.goals.away ?? 0 },
       status: m.fixture.status.short, 
       minute: m.fixture.status.elapsed || 0,
-      timestamp: m.fixture.timestamp
+      time: new Date(m.fixture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }));
 
     io.emit('footballUpdate', footballCache);
-    console.log(`Broadcasted ${footballCache.length} matches.`);
+    console.log(`Success! Broadcasted ${footballCache.length} matches.`);
   } catch (err) {
     console.error("API Error:", err.message);
   }
 };
 
-// Update every 2 minutes to stay safe within free tier limits
+// Fetch every 2 minutes
 setInterval(fetchFootball, 120000);
 
-app.get('/', (req, res) => res.send('Football Backend with Fallback Active'));
+app.get('/', (req, res) => res.send('Football Backend Active'));
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {

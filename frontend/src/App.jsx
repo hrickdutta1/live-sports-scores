@@ -18,7 +18,7 @@ function App() {
   return (
     <div className={`app-canvas ${isDark ? 'dark-theme' : 'light-theme'}`}>
       
-      {/* 1. THE FLOATING GLASS SIDEBAR */}
+      {/* 1. FLOATING GLASS SIDEBAR */}
       <aside className="glass-sidebar">
         <div className="sidebar-top">
           <div className="brand-logo">⚽ SCORE<span>HUB</span></div>
@@ -40,7 +40,7 @@ function App() {
         </div>
       </aside>
 
-      {/* 2. THE MAIN FEED (CENTER) */}
+      {/* 2. MAIN FEED */}
       <main className="main-feed">
         <header className="feed-header">
           <div className="header-info">
@@ -58,7 +58,10 @@ function App() {
               <div className="card-inner">
                 <div className="league-info">
                   <span className="league-badge">{m.league}</span>
-                  <span className="match-clock">{m.minute}' <span className="pulse-dot"></span></span>
+                  <span className="match-clock">
+                    {m.status === 'NS' ? m.time : `${m.minute}'`}
+                    {m.status !== 'NS' && m.status !== 'FT' && <span className="pulse-dot"></span>}
+                  </span>
                 </div>
                 
                 <div className="scoreboard">
@@ -83,17 +86,17 @@ function App() {
           )) : (
             <div className="empty-state">
               <div className="spinner"></div>
-              <p>Scanning global stadiums for live action...</p>
+              <p>Scanning global stadiums...</p>
             </div>
           )}
         </section>
       </main>
 
-      {/* 3. INSIGHTS PANEL (RIGHT) */}
+      {/* 3. INSIGHTS PANEL */}
       <aside className="insights-panel">
         <div className="glass-panel">
           <h4>Match Momentum</h4>
-          <p className="hint">Select a match to see live pressure gauges and tactical insights.</p>
+          <p className="hint">Select a match to see live pressure gauges.</p>
         </div>
       </aside>
     </div>
