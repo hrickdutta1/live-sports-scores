@@ -1,67 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
 :root {
-  --bg: #f3f4f7;
-  --white: #ffffff;
-  --border: #e5e7eb;
-  --text: #111827;
-  --green: #10b981;
+  --sidebar-w: 260px;
+  --panel-w: 300px;
+  --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; }
+/* THEME DEFINITIONS */
+.dark-theme {
+  --bg: #0b0e14;
+  --glass-bg: rgba(22, 27, 34, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --text-main: #f0f6fc;
+  --text-dim: #8b949e;
+  --accent: #238636;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
 
-.app-container {
-  display: grid;
-  grid-template-columns: 240px 1fr 300px;
+.light-theme {
+  --bg: #f6f8fa;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --text-main: #1f2328;
+  --text-dim: #6e7681;
+  --accent: #2da44e;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* LAYOUT ENGINE */
+.app-canvas {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  padding: 20px;
   gap: 20px;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 20px;
-  height: 100vh;
+  transition: background 0.5s ease;
 }
 
-/* Common Card Style */
-.sidebar, .main-content, .right-panel {
-  background: var(--white);
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+/* 1. FLOATING SIDEBAR */
+.glass-sidebar {
+  width: var(--sidebar-w);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30px 20px;
+  position: sticky;
+  top: 20px;
+  height: calc(100vh - 40px);
 }
 
-/* Sidebar */
-.sidebar h3 { font-size: 0.85rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-.league-list { list-style: none; padding: 0; margin-top: 20px; }
-.league-list li { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.95rem; cursor: pointer; }
+.brand-logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 40px; }
+.brand-logo span { color: var(--accent); }
 
-/* Main Content Header */
-.feed-header { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 10px; text-align: center; }
-.status-badge { margin-bottom: 15px; font-size: 0.8rem; font-weight: 700; }
-.online { color: var(--green); background: #ecfdf5; padding: 4px 12px; border-radius: 20px; }
-.offline { color: #ef4444; }
-
-.filter-tabs { display: flex; gap: 8px; justify-content: center; }
-.filter-tabs button {
-  background: var(--white); border: 1px solid var(--border); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: 600;
+.nav-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 15px; }
+.nav-item {
+  width: 100%; text-align: left; background: none; border: none; color: var(--text-dim);
+  padding: 12px 15px; border-radius: 12px; cursor: pointer; transition: var(--transition);
+  margin-bottom: 5px; font-weight: 600;
 }
-.filter-tabs button.active { background: var(--text); color: white; border-color: var(--text); }
+.nav-item.active { background: var(--accent); color: white; }
 
-/* Match Rows */
-.match-row { display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
-.match-time { color: var(--green); font-weight: 800; font-size: 0.85rem; width: 50px; }
-.match-main { display: flex; flex: 1; justify-content: center; align-items: center; gap: 15px; }
-.team-side { display: flex; align-items: center; gap: 10px; width: 160px; }
-.home { justify-content: flex-end; }
-.away { justify-content: flex-start; }
-.mini-logo { width: 28px; height: 28px; object-fit: contain; }
-.score-box { background: #f3f4f6; padding: 6px 14px; border-radius: 8px; font-weight: 900; font-size: 1.1rem; }
-
-.no-matches { text-align: center; padding: 50px; color: #6b7280; font-style: italic; }
-
-/* Right Panel */
-.promo-box { background: #111827; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
-.news-box { font-size: 0.9rem; color: #4b5563; }
-.news-img-placeholder { background: #e5e7eb; height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
-
-@media (max-width: 1100px) {
-  .app-container { grid-template-columns: 1fr; }
-  .sidebar, .right-panel { display: none; }
+.theme-toggle-btn {
+  width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border);
+  background: var(--bg); color: var(--text-main); cursor: pointer; font-size: 0.8rem;
 }
+
+/* 2. MAIN FEED & HERO CARDS */
+.main-feed { flex: 1; display: flex; flex-direction: column; gap: 30px; }
+
+.feed-header h1 { font-size: 2.2rem; font-weight: 800; margin: 0; }
+.feed-header p { color: var(--text-dim); margin-top: 5px; }
+
+.pro-match-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+}
+.pro-match-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+
+.scoreboard { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+.team { display: flex; flex-direction: column; align-items: center; width: 35%; gap: 10px; }
+.team-logo { width: 50px; height: 50px; object-fit: contain; }
+.team-name { font-weight: 700; font-size: 1.1rem; text-align: center; }
+
+.live-score { display: flex; align-items: center; gap: 15px; }
+.score-num { font-size: 2.5rem; font-weight: 800; }
+.score-divider { color: var(--text-dim); font-size: 1.5rem; }
+
+.league-badge { background: var(--bg); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; }
+.match-clock { color: var(--accent); font-weight: 800; font-size: 0.85rem; }
+
+/* 3. INSIGHTS PANEL */
+.insights-panel { width: var(--panel-w); }
+.glass-panel {
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  padding: 20px; border-radius: 20px; height: 300px;
+}
+
+.pulse-dot {
+  height: 8px; width: 8px; background-color: var(--accent); border-radius: 50%;
+  display: inline-block; margin-left: 5px; animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }

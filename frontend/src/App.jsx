@@ -16,56 +16,84 @@ function App() {
   }, []);
 
   return (
-    <div className={`app-shell ${isDark ? 'dark-theme' : 'light-theme'}`}>
-      {/* COLUMN 1: SIDEBAR */}
-      <aside className="sidebar">
-        <div className="logo">⚽ SCORE<span>HUB</span></div>
-        <ul className="league-list">
-          <li>🏆 Premier League</li>
-          <li>🇪🇸 La Liga</li>
-          <li>🇮🇳 ISL</li>
-        </ul>
+    <div className={`app-canvas ${isDark ? 'dark-theme' : 'light-theme'}`}>
+      
+      {/* 1. THE FLOATING GLASS SIDEBAR */}
+      <aside className="glass-sidebar">
+        <div className="sidebar-top">
+          <div className="brand-logo">⚽ SCORE<span>HUB</span></div>
+          <nav className="nav-menu">
+            <p className="nav-label">Main Menu</p>
+            <button className="nav-item active">🔥 Live Feed</button>
+            <button className="nav-item">🏆 Leagues</button>
+            <button className="nav-item">📅 Schedule</button>
+          </nav>
+        </div>
+
+        <div className="sidebar-bottom">
+          <div className="settings-card">
+            <p>Appearance</p>
+            <button className="theme-toggle-btn" onClick={() => setIsDark(!isDark)}>
+              {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
+            </button>
+          </div>
+        </div>
       </aside>
 
-      {/* COLUMN 2: FEED */}
-      <main className="feed-container">
+      {/* 2. THE MAIN FEED (CENTER) */}
+      <main className="main-feed">
         <header className="feed-header">
-          <h2>Live Football</h2>
-          <span className={`status ${connected ? 'online' : 'offline'}`}>
-            {connected ? "● Connected" : "○ Offline"}
-          </span>
+          <div className="header-info">
+            <h1>Live Football</h1>
+            <p>Real-time updates from global pitches</p>
+          </div>
+          <div className={`connection-status ${connected ? 'is-online' : 'is-offline'}`}>
+            {connected ? "● System Live" : "○ Reconnecting..."}
+          </div>
         </header>
 
-        <div className="match-grid">
+        <section className="match-grid">
           {matches.length > 0 ? matches.map(m => (
-            <div key={m.id} className="match-card">
-              <div className="match-top">
-                <span>{m.league}</span>
-                <span className="live-tag">{m.minute}'</span>
-              </div>
-              <div className="score-row">
-                <div className="team">
-                   <img src={m.home.logo} alt="" />
-                   <span>{m.home.name}</span>
+            <div key={m.id} className="pro-match-card">
+              <div className="card-inner">
+                <div className="league-info">
+                  <span className="league-badge">{m.league}</span>
+                  <span className="match-clock">{m.minute}' <span className="pulse-dot"></span></span>
                 </div>
-                <div className="score">{m.home.score} - {m.away.score}</div>
-                <div className="team">
-                   <span>{m.away.name}</span>
-                   <img src={m.away.logo} alt="" />
+                
+                <div className="scoreboard">
+                  <div className="team home">
+                    <img src={m.home.logo} alt="" className="team-logo" />
+                    <span className="team-name">{m.home.name}</span>
+                  </div>
+                  
+                  <div className="live-score">
+                    <span className="score-num">{m.home.score}</span>
+                    <span className="score-divider">:</span>
+                    <span className="score-num">{m.away.score}</span>
+                  </div>
+
+                  <div className="team away">
+                    <img src={m.away.logo} alt="" className="team-logo" />
+                    <span className="team-name">{m.away.name}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          )) : <p className="loading">Waiting for live match data...</p>}
-        </div>
+          )) : (
+            <div className="empty-state">
+              <div className="spinner"></div>
+              <p>Scanning global stadiums for live action...</p>
+            </div>
+          )}
+        </section>
       </main>
 
-      {/* COLUMN 3: SETTINGS */}
-      <aside className="utils-bar">
-        <div className="settings-panel">
-          <h4>Settings</h4>
-          <button className="theme-btn" onClick={() => setIsDark(!isDark)}>
-            {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
-          </button>
+      {/* 3. INSIGHTS PANEL (RIGHT) */}
+      <aside className="insights-panel">
+        <div className="glass-panel">
+          <h4>Match Momentum</h4>
+          <p className="hint">Select a match to see live pressure gauges and tactical insights.</p>
         </div>
       </aside>
     </div>
